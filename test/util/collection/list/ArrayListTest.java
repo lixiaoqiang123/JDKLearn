@@ -1,12 +1,11 @@
-package util.list;
+package util.collection.list;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class ArrayListTest {
@@ -61,7 +60,11 @@ public class ArrayListTest {
         //实际返回的是ArrayList中的Itr对象
         /**
          * 迭代器的底层原理
-         *
+         * 4. 为什么要 checkForComodification？
+         *          Java 集合类是非线程安全的；
+         *          Iterator 使用 expectedModCount 与集合的实际 modCount 进行比对；
+         *          如果中途集合结构被改变（比如调用了 list.remove()），modCount 变了 → 抛出 ConcurrentModificationException。
+         *          这是一种典型的 fail-fast 机制。
          */
         //方法二：使用迭代器
         Iterator<Integer> iterator = list.iterator();
@@ -111,17 +114,83 @@ public class ArrayListTest {
      * 题目 3：元素查找
      * 给定一个 List<String>，判断是否包含元素 "Java"，如果包含，输出其索引。
      */
+    @Test
+    public void containElement(){
+        List<String> list = Arrays.asList("Python", "Test", "Java", "Winner");
+        if(list.contains("Java")){
+            System.out.println(list.indexOf("Java"));
+        }else {
+            System.out.println("Java string is not found");
+        }
+
+        //使用 Stream 查找索引（不推荐查索引，因为 Stream 不支持索引）：
+        //如果你真的想结合 Stream，可以搭配 IntStream.range(...) 使用：
+        IntStream.range(0, list.size())  // 遍历 list 的索引：0 ~ list.size()-1
+                .filter(i -> "Java".equals(list.get(i)))  // 过滤出值为 "Java" 的索引
+                .forEach(i -> System.out.println("Found at index: " + i));  // 打印这些索引
+
+        //使用自定义函数式接口实现
+        FunctionTest<String> functionTest = (t,u)->u.contains(t);
+        boolean contain = functionTest.containElement("Java", list);
+        System.out.println(contain);
+    }
 
 
     /**
      * 题目 4：去重并排序
      * 编写方法，接收一个 List<Integer>，返回一个去重后从小到大排序的新列表。
      */
+    @Test
+    public void deduplicateAndSort(){
+        //使用TreeSet实现去重并排序
+        List<Integer> list = Arrays.asList(1,4,5,2,7,23,452,12,3,2,4,5);
+        TreeSet<Integer> integers = new TreeSet<>(list);
+        System.out.println(integers);
+        //使用Stream流去重并排序
+        List<Integer> list2 = Arrays.asList(1,4,5,2,7,23,452,12,3,2,4,5);
+        ArrayList<Integer> collect = list2.stream().distinct().sorted().collect(Collectors.toCollection(ArrayList::new));
+        System.out.println(collect);
+        //降序排序
+        List<Integer> list3 = Arrays.asList(1,4,5,2,7,23,452,12,3,2,4,5);
+        // b - a 是简单整数比较法，但当数据很大时可能会溢出。
+        //更安全的写法是： return Integer.compare(o2, o1);
+        //ArrayList<Integer> collect2 = list3.stream().distinct().sorted((a,b)->b-a).collect(Collectors.toCollection(ArrayList::new));
+        //Comparator.reverseOrder()   Comparator.naturalOrder()
+        ArrayList<Integer> collect2 = list3.stream().distinct().sorted(Comparator.reverseOrder()).collect(Collectors.toCollection(ArrayList::new));
+        System.out.println(collect2);
+        //保留顺序 + 去重
+        List<Integer> list4 = Arrays.asList(1,4,5,2,7,23,452,12,3,2,4,5);
+        LinkedHashSet<Integer> collect3 = new LinkedHashSet<>(list4);
+        System.out.println(collect3);
+        //仅排序不去重
+        List<Integer> list5 = Arrays.asList(1,4,5,2,7,23,452,12,3,2,4,5);
+        Collections.sort(list5);
+        System.out.println(list5);
+        //仅去重不排序
+        List<Integer> list6 = Arrays.asList(1,4,5,2,7,23,452,12,3,2,4,5);
+        LinkedHashSet<Integer> collect4 = new LinkedHashSet<>(list6);
+        System.out.println(collect4);
+    }
 
     /**
      * 题目 5：交集操作
      * 给定两个 List<String>，找出它们的交集（保留相同元素），要求不修改原始列表。
      */
+    @Test
+    public void getIntersection(){
+        List<Integer> list1 = new ArrayList<>(Arrays.asList(1,2,3,4,6,7,8));
+        List<Integer> list2 = new ArrayList<>(Arrays.asList(3,5,6,2,1,7,8));
+        //retainAll() 取两个集合中都有的-交集  removeAll() 取传入集合中没有的
+        //该方法使用了读写两个指针，在原数组进行操作，效率要比remove高
+        //“相比于在遍历中逐个 remove，retainAll() 底层使用的是批量处理算法（batchRemove），只需要遍历一遍原始数据，
+        // 通过读写指针优化内存操作，同时根据入参类型（Set vs List）进行条件性优化，性能和 GC 行为都更优。”
+        //remove操作会导致后边的数据往前移动，会进行 System.arraycopy（）操作
+        list2.retainAll(list1);
+        System.out.println(list2);
+        System.out.println(list1);
+        //使用stream流
+        //list1.stream().filter(list2::contains).collect(Collectors.toList());
+    }
 
     /**
      * 题目 6：统计出现频率
