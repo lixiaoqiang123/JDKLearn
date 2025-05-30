@@ -196,11 +196,39 @@ public class ArrayListTest {
      * 题目 6：统计出现频率
      * 编写方法，统计一个 List<String> 中每个字符串出现的次数，并返回 Map<String, Integer>。
      */
+    @Test
+    public void statistic(){
+        //自己实现
+        List<String> list = Arrays.asList("J","A","C","G","H","J","C","G");
+        HashMap<String, Integer> result = new HashMap<String, Integer>();
+        HashSet<String> uniqueString = new HashSet<>(list);
+        for(String key : uniqueString){
+            result.put(key,0);
+        }
+        for(String key : list){
+            if(result.containsKey(key)){
+                result.put(key,result.get(key)+1);
+            }
+        }
+        System.out.println(result);
+        //优化
+        List<String> list2 = Arrays.asList("J","A","C","G","H","J","C","G");
+        HashMap<String, Integer> result2 = new HashMap<String, Integer>();
+        for(String key : list2){
+            result2.put(key,result2.getOrDefault(key,0)+1);
+        }
+        System.out.println(result2);
+        //使用Stream流
+        List<String> list3 = Arrays.asList("J","A","C","G","H","J","C","G");
+        Map<String, Long> collect = list3.stream().collect(Collectors.groupingBy(s -> s, Collectors.counting()));
+        System.out.println(collect);
+    }
 
     /**
      * 题目 7：模拟 ArrayList 扩容机制
      * 写一个类 MyArrayList，实现简单的动态数组逻辑，包括 add() 和 get() 方法，并支持自动扩容（可设置初始容量为 2，每次扩容为原容量的 1.5 倍）。
      */
+
 
 
     /**
